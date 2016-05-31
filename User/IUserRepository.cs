@@ -8,6 +8,6 @@ namespace Your.Business
 {
     public interface IUserRepository : IRepository2<User, int>
     {
-        //bool ValidateUserFromCC(User entity);
+         
     }    
 }
