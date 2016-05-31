@@ -1,0 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+
+namespace Your.Business
+{
+    public interface IRepository2<TModelType, TKey> where TModelType : IEntity<TKey>
+    {
+        IEnumerable<TModelType> GetAll();
+        TModelType Get(TKey id);
+        IEnumerable<TModelType> Find(Expression<Func<TModelType, bool>> predicate);
+        TModelType Add(TModelType entity);
+        TModelType Update(TModelType profile);
+        TModelType Remove(TModelType entity);
+    }
+}
