@@ -26,6 +26,10 @@ public void ConfigureServices(IServiceCollection services)
             services.AddInstance<ISettings>(settings);
             
             //add all of your repositories below
+            services.AddSingleton<ISampleRepository, SampleRepository>();
             //services.AddSingleton<IUserUnitOfWork, UserUnitOfWorkEF>();
-            services.AddSingleton<IUserUnitOfWork, UserUnitOfWorkAdo>();
+            //services.AddSingleton<IUserUnitOfWork, UserUnitOfWorkAdo>();
+            //services.AddTransient<IUserUnitOfWork, UserUnitOfWorkEF>();
+            //services.AddTransient<IUserUnitOfWork, UserUnitOfWorkAdo>();
+            services.AddTransient<IUserBL, UserBL>();
         }
