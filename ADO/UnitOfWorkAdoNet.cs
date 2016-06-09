@@ -22,29 +22,36 @@ namespace Your.Business.ADO
         public void BeginTransaction()
         {
             if (_transaction == null)
-            {
-                _transaction = _context.Connection.BeginTransaction();
-                _context.Transaction = _transaction;
-            }
+                startTransaction();
         }
 
+        private void startTransaction()
+        {
+            _transaction = _context.Connection.BeginTransaction();
+            _context.Transaction = _transaction;
+        }
         public void Dispose()
         {
-            if (_transaction == null)
-                return;
-
-            _transaction.Rollback();
-            _transaction.Dispose();
-            _transaction = null;
+            if (_transaction != null)
+            {
+                _transaction.Rollback();
+                _transaction.Dispose();
+                _transaction = null;
+            }
+            //for singleton instance leave connection open
+            if(_context!=null && _context.Connection!=null)
+                _context.Connection.Dispose();
         }
 
         public void Commit()
         {
             if (_transaction == null)
-                return;
-
+                return;            
             _transaction.Commit();
-            //_transaction = null;
+            _transaction.Dispose();
+            _transaction = null;
+            //start a new transaction for unit of work to continue
+            startTransaction();
         }
 
         
@@ -54,7 +61,10 @@ namespace Your.Business.ADO
                 return;
 
             _transaction.Rollback();
-            //_transaction = null;
+            _transaction.Dispose();
+            _transaction = null;
+            //start a new transaction for unit of work to continue
+            startTransaction();
         }
     }
 }
