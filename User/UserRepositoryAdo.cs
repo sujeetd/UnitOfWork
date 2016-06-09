@@ -7,7 +7,7 @@ using System.Data;
 
 namespace Your.Business
 {
-    public class UserRepositoryAdo : IUserRepository
+     public class UserRepositoryAdo : IUserRepository
     {
         #region Constructor
         private readonly ILog _log;
@@ -126,7 +126,7 @@ namespace Your.Business
                     _log.Write("Retrieving all users");
                     using (var command = _context.CreateCommand())
                     {
-                        command.CommandText = @"SELECT id, firstname, middlename, lastname, editdate, createdate, isactive  FROM Users Where " + GetWhereFromPredicate(predicate);
+                        command.CommandText = @"SELECT id, firstname, middlename, lastname, editdate, createdate, isactive  FROM Users ";//  Where " + GetWhereFromPredicate(predicate);
                         using (var reader = command.ExecuteReader())
                         {
                             while (reader.Read())
@@ -136,7 +136,7 @@ namespace Your.Business
                                 repo.Add(item);
                                 _repository.Add(item);
                             }
-                            return repo;
+                            return repo.AsQueryable().Where(predicate).ToList();
                         }
                     }
                 }
@@ -177,13 +177,14 @@ namespace Your.Business
                     using (var command = _context.CreateCommand())
                     {
                         command.CommandText = @"INSERT INTO Users (firstname, middlename, lastname, age, editdate, createdate)  VALUES( @firstname, @middlename, @lastname, @age, SYSDATETIME(), SYSDATETIME());  SELECT @id = SCOPE_IDENTITY();";
-                        _context.AddParameter(command, "firstname", System.Data.DbType.String, entity.FirstName, System.Data.ParameterDirection.Input);
-                        _context.AddParameter(command, "middlename", System.Data.DbType.String, entity.MiddleName, System.Data.ParameterDirection.Input);
-                        _context.AddParameter(command, "lastname", System.Data.DbType.String, entity.LastName, System.Data.ParameterDirection.Input);
-                        _context.AddParameter(command, "age", System.Data.DbType.Int32, entity.Age, System.Data.ParameterDirection.Input);
-                        _context.AddParameter(command, "id", System.Data.DbType.Int32, entity.ID, System.Data.ParameterDirection.Output);
+                        _context.AddParameter(command, "@firstname", System.Data.DbType.String, entity.FirstName, System.Data.ParameterDirection.Input);
+                        _context.AddParameter(command, "@middlename", System.Data.DbType.String, entity.MiddleName, System.Data.ParameterDirection.Input);
+                        _context.AddParameter(command, "@lastname", System.Data.DbType.String, entity.LastName, System.Data.ParameterDirection.Input);
+                        _context.AddParameter(command, "@age", System.Data.DbType.Int32, entity.Age, System.Data.ParameterDirection.Input);
+                        _context.AddParameter(command, "@id", System.Data.DbType.Int32, entity.ID, System.Data.ParameterDirection.Output);
                         int ctr = command.ExecuteNonQuery();
-                        entity.ID = Convert.ToInt32(command.Parameters["id"]);
+                        var outparam = command.Parameters["@id"] as IDbDataParameter; 
+                        entity.ID = Convert.ToInt32(outparam.Value);
                         return entity;
                     }
                 }
@@ -205,10 +206,7 @@ namespace Your.Business
                     using (var command = _context.CreateCommand())
                     {
                         command.CommandText = @"DELETE FROM Users Where id= @id";
-                        var paramid = command.CreateParameter();
-                        paramid.DbType = System.Data.DbType.Int32;
-                        paramid.Value = entity.ID;
-                        command.Parameters.Add(paramid);
+                        _context.AddParameter(command, "id", System.Data.DbType.Int32, entity.ID, System.Data.ParameterDirection.Input);
                         int ctr = command.ExecuteNonQuery();
                         entity.ID = 0;
                         return entity;
