@@ -14,11 +14,12 @@ namespace Your.WebAPI.Controllers
     [Route("api/[controller]")]
     public class UserController : Controller
     {
-        IUserUnitOfWork _uow;
+        IUserBL _userBL;
         ILog _log;
-        public UserController(ILog log, IUserUnitOfWork uow)
+        public UserController(ILog log, IUserBL userBL)
         {
-            _uow = uow;
+            _userBL = userBL;
+            _userBL.UseAdo = true;
             _log = log;            
         }
        // GET: api/values
@@ -29,7 +30,7 @@ namespace Your.WebAPI.Controllers
             {
                 try
                 {
-                    return _uow.Users.GetAll();
+                    return _userBL.Get();
                 }
                 catch (Exception ex)
                 {
@@ -48,7 +49,7 @@ namespace Your.WebAPI.Controllers
             {
                 try
                 {                   
-                    return _uow.Users.Get(id);
+                    return _userBL.Get(id);
                 }
                 catch (Exception ex)
                 {
@@ -72,7 +73,7 @@ namespace Your.WebAPI.Controllers
                         _log.Write("The model is not valid");
                         return;
                     }
-                    _uow.Users.Add(value);
+                    _userBL.Post(value);
                     return;
                 }
                 catch (Exception ex)
@@ -97,7 +98,7 @@ namespace Your.WebAPI.Controllers
                         return;
                     }
                     if (value != null && id == value.ID)
-                        _uow.Users.Update(value);
+                        _userBL.Put(id, value);
                     return;
                 }
                 catch (Exception ex)
@@ -123,8 +124,7 @@ namespace Your.WebAPI.Controllers
                         _log.Write("The model is not valid");
                         return;
                     }
-                    var user = _uow.Users.Get(id);
-                    _uow.Users.Remove(user);
+                    _userBL.Delete(id);
                     return;
                 }
                 catch (Exception ex)
@@ -138,17 +138,22 @@ namespace Your.WebAPI.Controllers
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            _uow.BeginTransaction();
+            _userBL.OnExecuting();
+            //_uow.BeginTransaction();
             //UnitOfWork = filterContext.Request.GetDependencyScope().GetService(typeof(IUnitOfWork)) as IUnitOfWork;
             //UnitOfWork.BeginTransaction();
         }
 
         public override void OnActionExecuted(ActionExecutedContext filterContext)
         {
-            if (filterContext.Exception == null)
-                _uow.Commit();
-            else
-                _uow.Rollback();
+            _userBL.OnExecuted(filterContext.Exception != null);
+            //if (filterContext.Exception == null)
+            //    _uow.Commit();
+            //else
+            //   _uow.Rollback();
+            ////if not singleton DI then use dispose
+            //_uow.Dispose();  
         }
     }
+
 }
