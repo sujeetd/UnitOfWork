@@ -119,7 +119,7 @@ namespace Your.Business
                     _log.Write("Retrieving all UserRoles");
                     using (var command = _context.CreateCommand())
                     {
-                        command.CommandText = @"SELECT id, userid, roleid, role  FROM UserRole Where " + GetWhereFromPredicate(predicate);
+                        command.CommandText = @"SELECT id, userid, roleid, role  FROM UserRoles ";// + GetWhereFromPredicate(predicate);
                         using (var reader = command.ExecuteReader())
                         {
                             while (reader.Read())
@@ -129,7 +129,7 @@ namespace Your.Business
                                 repo.Add(item);
                                 _repository.Add(item);
                             }
-                            return repo;
+                            return repo.AsQueryable().Where(predicate).ToList(); 
                         }
                     }
                 }
@@ -169,13 +169,14 @@ namespace Your.Business
                     _log.Write("Adding UserRole");
                     using (var command = _context.CreateCommand())
                     {
-                        command.CommandText = @"INSERT INTO UserRole (userid, roleid, role, editdate, createdate)  VALUES( @userid, @roleid, @role, SYSDATETIME(), SYSDATETIME());  SELECT @id = SCOPE_IDENTITY();";
+                        command.CommandText = @"INSERT INTO UserRoles (userid, roleid, role, editdate, createdate)  VALUES( @userid, @roleid, @role, SYSDATETIME(), SYSDATETIME());  SELECT @id = SCOPE_IDENTITY();";
                         _context.AddParameter(command, "userid", System.Data.DbType.Int32, entity.UserId, System.Data.ParameterDirection.Input);
                         _context.AddParameter(command, "roleid", System.Data.DbType.Int32, entity.RoleId, System.Data.ParameterDirection.Input);
                         _context.AddParameter(command, "role", System.Data.DbType.String, entity.Role, System.Data.ParameterDirection.Input);
                         _context.AddParameter(command, "id", System.Data.DbType.Int32, entity.ID, System.Data.ParameterDirection.Output);
                         int ctr = command.ExecuteNonQuery();
-                        entity.ID = Convert.ToInt32(command.Parameters["id"]);
+                        var outparam = command.Parameters["id"] as IDbDataParameter;
+                        entity.ID = Convert.ToInt32(outparam.Value);
                         return entity;
                     }
                 }
@@ -196,11 +197,8 @@ namespace Your.Business
                     _log.Write("Retrieving all UserRoles");
                     using (var command = _context.CreateCommand())
                     {
-                        command.CommandText = @"DELETE FROM UserRole Where id= @id";
-                        var paramid = command.CreateParameter();
-                        paramid.DbType = System.Data.DbType.Int32;
-                        paramid.Value = entity.ID;
-                        command.Parameters.Add(paramid);
+                        command.CommandText = @"DELETE FROM UserRoles Where id= @id";
+                        _context.AddParameter(command, "id", System.Data.DbType.Int32, entity.ID, System.Data.ParameterDirection.Input);
                         int ctr = command.ExecuteNonQuery();
                         entity.ID = 0;
                         return entity;
@@ -223,7 +221,7 @@ namespace Your.Business
                     _log.Write("Adding UserRole");
                     using (var command = _context.CreateCommand())
                     {
-                        command.CommandText = @"UPDATE UserRole set userid=@userid, roleid=@roleid, role=@role, editdate= SYSDATETIME() WHERE id= @id ";
+                        command.CommandText = @"UPDATE UserRoles set userid=@userid, roleid=@roleid, role=@role, editdate= SYSDATETIME() WHERE id= @id ";
                         _context.AddParameter(command, "userid", System.Data.DbType.Int32, entity.UserId, System.Data.ParameterDirection.Input);
                         _context.AddParameter(command, "roleid", System.Data.DbType.Int32, entity.RoleId, System.Data.ParameterDirection.Input);
                         _context.AddParameter(command, "role", System.Data.DbType.String, entity.Role, System.Data.ParameterDirection.Input);
